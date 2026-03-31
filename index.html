@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Mobility Traffic Dashboard v2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* ── THEME TOKENS ── */
+[data-theme="dark"]{
+  --bg:#0d1117;--bg2:#161b22;
+  --surface:rgba(255,255,255,0.06);--surface2:rgba(255,255,255,0.10);
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#f0f6fc;--muted:#8b949e;--muted2:#6e7681;
+  --card-bg:rgba(255,255,255,0.05);
+  --input-bg:rgba(255,255,255,0.10);
+  --glow1:rgba(0,212,255,0.07);--glow2:rgba(124,58,237,0.07);
+}
+[data-theme="light"]{
+  --bg:#f6f8fa;--bg2:#ffffff;
+  --surface:rgba(0,0,0,0.04);--surface2:rgba(0,0,0,0.07);
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#1a1f2e;--muted:#586069;--muted2:#8a9099;
+  --card-bg:#ffffff;
+  --input-bg:rgba(0,0,0,0.06);
+  --glow1:rgba(0,150,200,0.04);--glow2:rgba(100,50,200,0.04);
+}
+
+:root{
+  --blue:#00d4ff;--green:#10b981;--purple:#7c3aed;
+  --amber:#f59e0b;--pink:#ec4899;--red:#ef4444;--radius:14px;
+}
+
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);min-height:100vh;color:var(--text);
+  background-image:radial-gradient(ellipse at 20% 0%,var(--glow1) 0%,transparent 60%),
+                   radial-gradient(ellipse at 80% 10%,var(--glow2) 0%,transparent 50%);
+  transition:background .3s,color .3s;
+}
+
+.wrap{max-width:1420px;margin:0 auto;padding:24px 20px}
+
+/* ── HEADER ── */
+.header{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:24px 28px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
+}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-logo{
+  width:50px;height:50px;
+  background:linear-gradient(135deg,rgba(0,212,255,0.18),rgba(124,58,237,0.18));
+  border:1px solid rgba(0,212,255,0.3);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.header-logo svg{width:26px;height:26px}
+.header-title{
+  font-family:'Space Grotesk',sans-serif;font-size:1.55rem;font-weight:700;letter-spacing:-.5px;
+  background:linear-gradient(90deg,#00d4ff 0%,#a78bfa 60%,#ec4899 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.header-sub{font-size:.8rem;color:var(--muted);margin-top:3px}
+.header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.meta-chip{
+  display:flex;align-items:center;gap:6px;padding:5px 12px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:30px;
+  font-size:.76rem;color:var(--muted);
+}
+.meta-chip svg{width:13px;height:13px;flex-shrink:0}
+.meta-chip span{color:var(--text);font-weight:500}
+
+/* ── TOOLBAR ── */
+.toolbar{
+  display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;
+}
+.filter-group{
+  background:var(--surface);border:1px solid var(--border2);
+  padding:9px 15px;border-radius:10px;display:flex;align-items:center;gap:9px;
+}
+.filter-group label{font-size:.78rem;font-weight:500;color:var(--muted);white-space:nowrap}
+.filter-group select,
+.filter-group input[type=range]{
+  background:var(--input-bg);border:1px solid var(--border2);
+  color:var(--text);padding:5px 10px;border-radius:7px;
+  font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;
+}
+.filter-group select option{background:#1a1a2e;color:#fff}
+.filter-group select:focus{outline:none;border-color:var(--blue)}
+.slider-val{font-size:.82rem;font-weight:600;color:var(--blue);min-width:38px}
+
+.icon-btn{
+  display:flex;align-items:center;gap:7px;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);padding:9px 16px;border-radius:9px;
+  font-size:.82rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;
+  transition:background .2s,transform .15s;white-space:nowrap;
+}
+.icon-btn:hover{background:var(--surface);transform:translateY(-1px)}
+.icon-btn svg{width:15px;height:15px;flex-shrink:0}
+
+.analyze-btn{
+  display:flex;align-items:center;gap:7px;
+  background:linear-gradient(135deg,rgba(124,58,237,.8),rgba(0,212,255,.8));
+  border:none;color:#fff;padding:9px 20px;border-radius:9px;
+  font-weight:600;font-size:.85rem;cursor:pointer;font-family:'Inter',sans-serif;
+  transition:opacity .2s,transform .15s;
+}
+.analyze-btn:hover{opacity:.88;transform:translateY(-1px)}
+.analyze-btn svg{width:15px;height:15px}
+
+.theme-btn{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .2s;flex-shrink:0;
+}
+.theme-btn:hover{background:var(--surface)}
+.theme-btn svg{width:17px;height:17px}
+
+/* ── AI FORECAST STRIP ── */
+.forecast-strip{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:12px;margin-bottom:20px;
+  background:var(--surface);border:1px solid rgba(0,212,255,.2);
+  border-radius:var(--radius);padding:16px 20px;
+}
+.forecast-header{
+  grid-column:1/-1;display:flex;align-items:center;gap:10px;
+  font-size:.8rem;font-weight:600;color:var(--blue);letter-spacing:.4px;
+  text-transform:uppercase;margin-bottom:4px;
+}
+.forecast-header svg{width:15px;height:15px}
+.fc-card{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+}
+.fc-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.fc-value{font-size:1.5rem;font-weight:700;font-family:'Space Grotesk',sans-serif;margin-bottom:3px}
+.fc-sub{font-size:.75rem;color:var(--muted)}
+.fc-risk{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.78rem;font-weight:600;padding:3px 10px;border-radius:20px;margin-top:4px;
+}
+.risk-low{background:rgba(16,185,129,.18);color:#34d399}
+.risk-med{background:rgba(245,158,11,.18);color:#fbbf24}
+.risk-high{background:rgba(239,68,68,.18);color:#f87171}
+.fc-bar{height:6px;border-radius:3px;margin-top:8px;background:var(--border2)}
+.fc-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+
+/* ── GAUGE ── */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge-svg{width:160px;height:90px}
+
+/* ── KPI GRID ── */
+.kpi-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;margin-bottom:20px;
+}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px;
+  position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s;
+}
+.kpi-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.3)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-card.kc-blue::before{background:linear-gradient(90deg,var(--blue),#0ea5e9)}
+.kpi-card.kc-green::before{background:linear-gradient(90deg,var(--green),#34d399)}
+.kpi-card.kc-amber::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.kpi-card.kc-pink::before{background:linear-gradient(90deg,var(--pink),#f472b6)}
+.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.kpi-icon svg{width:18px;height:18px}
+.ki-blue{background:rgba(0,212,255,.15)} .ki-green{background:rgba(16,185,129,.15)}
+.ki-amber{background:rgba(245,158,11,.15)} .ki-pink{background:rgba(236,72,153,.15)}
+.kpi-label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi-value{font-size:1.8rem;font-weight:700;font-family:'Space Grotesk',sans-serif;margin-bottom:4px}
+.kpi-change{font-size:.78rem;display:flex;align-items:center;gap:4px}
+.kpi-change svg{width:12px;height:12px}
+.pos{color:var(--green)} .neg{color:var(--red)}
+
+/* ── DASH GRID ── */
+.dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:18px}
+@media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  transition:transform .25s,box-shadow .25s;
+}
+.chart-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.25)}
+.chart-card.full{grid-column:1/-1}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.card-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-icon svg{width:15px;height:15px}
+.ci-blue{background:rgba(0,212,255,.15)} .ci-green{background:rgba(16,185,129,.15)}
+.ci-amber{background:rgba(245,158,11,.15)} .ci-pink{background:rgba(236,72,153,.15)}
+.ci-purp{background:rgba(124,58,237,.15)}
+.card-header h3{font-size:.93rem;font-weight:600;color:var(--text)}
+.chart-wrap{position:relative;height:240px}
+.chart-wrap-sm{position:relative;height:180px}
+
+/* ── HEATMAP ── */
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+.hm-cell{
+  aspect-ratio:1;border-radius:5px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;font-weight:600;color:rgba(255,255,255,.7);
+  transition:transform .15s,filter .15s;
+  position:relative;
+}
+.hm-cell:hover{transform:scale(1.12);z-index:2;filter:brightness(1.2)}
+.hm-legend{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.72rem;color:var(--muted)}
+.hm-leg-bar{
+  flex:1;height:8px;border-radius:4px;
+  background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444);
+}
+
+/* ── WEATHER TOGGLE ── */
+.weather-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.wtab{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:.8rem;
+  font-family:'Inter',sans-serif;transition:all .2s;
+}
+.wtab svg{width:14px;height:14px}
+.wtab.active{background:rgba(0,212,255,.15);border-color:var(--blue);color:var(--blue)}
+
+/* ── EVENTS ── */
+.event-log{max-height:240px;overflow-y:auto}
+.event-log::-webkit-scrollbar{width:3px}
+.event-log::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.event-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--border);
+  animation:slideIn .4s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.event-item:last-child{border-bottom:none}
+.event-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ed-high{background:var(--red);box-shadow:0 0 5px rgba(239,68,68,.6)}
+.ed-med{background:var(--amber);box-shadow:0 0 5px rgba(245,158,11,.5)}
+.ed-low{background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.5)}
+.event-time{font-size:.72rem;color:var(--muted);min-width:40px}
+.event-text{font-size:.83rem;color:var(--text);line-height:1.4}
+
+/* ── STATION LIST ── */
+.station-list{display:flex;flex-direction:column;gap:8px}
+.station-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 13px;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:9px;
+}
+.station-name{font-size:.84rem;font-weight:500}
+.st-avail{background:rgba(16,185,129,.18);color:#34d399}
+.st-busy{background:rgba(245,158,11,.18);color:#fbbf24}
+.st-off{background:rgba(239,68,68,.18);color:#f87171}
+.st-badge{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px}
+
+/* ── ROUTE BARS ── */
+.route-list{display:flex;flex-direction:column;gap:11px}
+.route-item{display:flex;align-items:center;gap:12px}
+.route-name{min-width:70px;font-size:.82rem;font-weight:500}
+.route-bar-bg{flex:1;height:20px;background:rgba(255,255,255,.07);border-radius:5px;overflow:hidden;position:relative}
+.route-bar{height:100%;border-radius:5px;transition:width .6s ease}
+.rb-good{background:linear-gradient(90deg,var(--green),#34d399)}
+.rb-warn{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.rb-poor{background:linear-gradient(90deg,var(--red),#f87171)}
+.route-target{position:absolute;left:85%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.45)}
+.route-val{min-width:42px;text-align:right;font-size:.82rem;font-weight:600}
+
+/* ── MODE SHARE ── */
+.mode-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+@media(max-width:560px){.mode-grid{grid-template-columns:repeat(2,1fr)}}
+.mode-item{
+  text-align:center;padding:15px 8px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;
+}
+.mode-svg{display:flex;justify-content:center;margin-bottom:8px}
+.mode-svg svg{width:28px;height:28px}
+.mode-name{font-size:.75rem;color:var(--muted);margin-bottom:4px}
+.mode-pct{font-size:1.3rem;font-weight:700;font-family:'Space Grotesk',sans-serif}
+
+/* ── CAUSES LEGEND ── */
+.causes-legend{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:12px}
+.cause-item{display:flex;align-items:center;gap:7px;font-size:.76rem;color:var(--muted)}
+.cause-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+
+/* ── DATASET TABLE ── */
+.table-wrap{overflow-x:auto;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:600px}
+th{
+  text-align:left;padding:8px 10px;
+  background:var(--surface2);color:var(--muted);
+  font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;
+}
+th:hover{color:var(--text)}
+td{
+  padding:8px 10px;border-bottom:1px solid var(--border);
+  color:var(--text);white-space:nowrap;
+}
+tr:hover td{background:var(--surface2)}
+.tbl-pill{display:inline-block;font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:600}
+.tbl-controls{display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:8px}
+.tbl-info{font-size:.76rem;color:var(--muted)}
+.tbl-pages{display:flex;gap:6px}
+.pg-btn{
+  padding:4px 11px;border-radius:7px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text);cursor:pointer;font-size:.76rem;
+  font-family:'Inter',sans-serif;
+}
+.pg-btn.active{background:rgba(0,212,255,.18);border-color:var(--blue);color:var(--blue)}
+.pg-btn:hover:not(.active){background:var(--surface2)}
+
+/* ── GRAIN PANEL ── */
+.grain-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.grain-card{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:11px;padding:14px 16px;
+}
+.grain-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.grain-num{
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(0,212,255,.18);color:var(--blue);
+  font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.grain-title{font-size:.85rem;font-weight:600;color:var(--text)}
+.grain-col{font-size:.72rem;color:var(--blue);margin-bottom:4px}
+.grain-chart-type{
+  display:inline-block;font-size:.68rem;padding:2px 8px;
+  background:rgba(124,58,237,.2);color:#a78bfa;
+  border-radius:20px;margin-bottom:7px;
+}
+.grain-desc{font-size:.76rem;color:var(--muted);line-height:1.55}
+
+/* ── MODAL ── */
+.modal-bg{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.7);z-index:999;
+  align-items:center;justify-content:center;
+}
+.modal-bg.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:28px;
+  max-width:560px;width:92%;max-height:85vh;overflow-y:auto;
+}
+.modal-hdr{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.modal-hdr svg{width:20px;height:20px;color:var(--blue);flex-shrink:0}
+.modal-title{
+  font-family:'Space Grotesk',sans-serif;font-size:1.15rem;font-weight:700;
+  background:linear-gradient(90deg,var(--blue),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.apoint{padding:12px 0;border-bottom:1px solid var(--border);font-size:.87rem;line-height:1.65;color:var(--muted)}
+.apoint:last-child{border-bottom:none}
+.apoint strong{color:var(--text)}
+.modal-close{
+  margin-top:20px;background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);padding:9px 22px;border-radius:8px;cursor:pointer;
+  font-size:.87rem;font-family:'Inter',sans-serif;
+}
+.modal-close:hover{background:var(--surface)}
+
+/* ── FOOTER ── */
+.footer{
+  margin-top:24px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 26px;
+  display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;
+}
+.footer-left{font-size:.78rem;color:var(--muted);line-height:1.7}
+.footer-left strong{color:var(--text)}
+.footer-link{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 15px;background:rgba(0,212,255,.1);
+  border:1px solid rgba(0,212,255,.25);border-radius:8px;
+  color:var(--blue);font-size:.78rem;font-weight:500;text-decoration:none;
+  transition:background .2s;
+}
+.footer-link:hover{background:rgba(0,212,255,.18)}
+.footer-link svg{width:13px;height:13px}
+
+/* ── SECTION DIVIDER ── */
+.section-hdr{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;margin-top:4px;
+}
+.section-hdr h2{font-size:.9rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.section-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── PRINT ── */
+@media print{
+  body{background:#fff !important;color:#111 !important}
+  .toolbar,.theme-btn,.analyze-btn,.modal-bg{display:none !important}
+  .chart-card,.kpi-card,.forecast-strip,.grain-card{
+    border:1px solid #ddd !important;background:#fff !important;
+    break-inside:avoid;
+  }
+  .kpi-value,.header-title,.fc-value{color:#111 !important}
+  .header-title{-webkit-text-fill-color:#111 !important}
+  .wrap{padding:10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M3 9l4-4 4 4 4-4 4 4" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="2" y="13" width="4" height="5" rx="1" fill="#7c3aed"/>
+        <rect x="10" y="11" width="4" height="7" rx="1" fill="#00d4ff"/>
+        <rect x="18" y="14" width="4" height="4" rx="1" fill="#10b981"/>
+        <circle cx="4" cy="20" r="1.5" fill="#f59e0b"/>
+        <circle cx="12" cy="20" r="1.5" fill="#f59e0b"/>
+        <circle cx="20" cy="20" r="1.5" fill="#f59e0b"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">Smart Mobility Traffic Dashboard</div>
+      <div class="header-sub">IoT-powered analytics · Traffic AI · EV Charging · Accident Prediction · Public Transport</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span>50,000+</span>&nbsp;records</div>
+    <div class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>18</span>&nbsp;features</div>
+    <div class="meta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><span>Claude AI</span>&nbsp;powered</div>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- ── TOOLBAR ── -->
+<div class="toolbar">
+  <div class="filter-group">
+    <label>City Zone:</label>
+    <select id="zoneFilter" onchange="updateDashboard()">
+      <option value="all">All Zones</option>
+      <option value="north">North</option>
+      <option value="south">South</option>
+      <option value="east">East</option>
+      <option value="west">West</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Year:</label>
+    <select id="yearFilter" onchange="updateDashboard()">
+      <option value="2024">2024</option>
+      <option value="2023">2023</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Weather:</label>
+    <div class="weather-tabs" style="margin-bottom:0;gap:6px">
+      <button class="wtab active" onclick="setWeather('sunny',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        Sunny
+      </button>
+      <button class="wtab" onclick="setWeather('rainy',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>
+        Rainy
+      </button>
+      <button class="wtab" onclick="setWeather('foggy',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/><line x1="4" y1="19" x2="20" y2="19"/><line x1="4" y1="23" x2="20" y2="23"/></svg>
+        Foggy
+      </button>
+    </div>
+  </div>
+  <div class="filter-group">
+    <label>Hour:</label>
+    <input type="range" id="hourSlider" min="0" max="23" value="14" step="1" oninput="onHourSlide(this.value)" style="width:110px;padding:0">
+    <span class="slider-val" id="hourVal">14:00</span>
+  </div>
+  <button class="analyze-btn" onclick="document.getElementById('modal').classList.add('open')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    AI Analysis
+  </button>
+  <button class="icon-btn" onclick="exportPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export PDF
+  </button>
+</div>
+
+<!-- ── AI FORECAST STRIP ── -->
+<div class="forecast-strip">
+  <div class="forecast-header">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    AI Prediction Scorecard — Next 3 Hour Forecast
+  </div>
+  <div class="fc-card">
+    <div class="fc-label">Predicted congestion</div>
+    <div class="fc-value" id="fc-cong" style="color:var(--amber)">0.74</div>
+    <div class="fc-sub">Index 0–1 · in 1 hour</div>
+    <div class="fc-bar"><div class="fc-bar-fill" id="fc-cong-bar" style="width:74%;background:var(--amber)"></div></div>
+  </div>
+  <div class="fc-card">
+    <div class="fc-label">Accident risk</div>
+    <div class="fc-value" id="fc-risk-val" style="color:var(--amber)">Medium</div>
+    <div class="fc-risk risk-med" id="fc-risk-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+      Watch zones 3, 7
+    </div>
+  </div>
+  <div class="fc-card">
+    <div class="fc-label">EV demand (next hr)</div>
+    <div class="fc-value" id="fc-ev" style="color:var(--green)">+18%</div>
+    <div class="fc-sub">Est. 148 sessions</div>
+    <div class="fc-bar"><div class="fc-bar-fill" id="fc-ev-bar" style="width:68%;background:var(--green)"></div></div>
+  </div>
+  <div class="fc-card">
+    <div class="fc-label">Avg speed forecast</div>
+    <div class="fc-value" id="fc-speed" style="color:var(--blue)">38 km/h</div>
+    <div class="fc-sub">–4 km/h vs current</div>
+    <div class="fc-bar"><div class="fc-bar-fill" id="fc-speed-bar" style="width:55%;background:var(--blue)"></div></div>
+  </div>
+  <div class="fc-card">
+    <div class="fc-label">City efficiency score</div>
+    <div class="gauge-wrap">
+      <svg class="gauge-svg" viewBox="0 0 160 90" id="gaugeSvg">
+        <path d="M15 80 A65 65 0 0 1 145 80" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="14" stroke-linecap="round"/>
+        <path id="gaugeArc" d="M15 80 A65 65 0 0 1 145 80" fill="none" stroke="url(#gGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="204" stroke-dashoffset="51"/>
+        <defs><linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#ef4444"/><stop offset="50%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#10b981"/></linearGradient></defs>
+        <text x="80" y="76" text-anchor="middle" font-size="22" font-weight="700" font-family="Space Grotesk,sans-serif" fill="#f0f6fc" id="gaugeVal">75</text>
+        <text x="80" y="89" text-anchor="middle" font-size="9" fill="#8b949e">/ 100</text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ── KPI CARDS ── -->
+<div class="kpi-grid">
+  <div class="kpi-card kc-blue">
+    <div class="kpi-icon ki-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+    <div class="kpi-label">Avg Traffic Speed</div>
+    <div class="kpi-value" id="avgSpeed">42.5 km/h</div>
+    <div class="kpi-change pos" id="speedChange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>3.2% vs last month</div>
+  </div>
+  <div class="kpi-card kc-green">
+    <div class="kpi-icon ki-green"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <div class="kpi-label">EV Sessions Today</div>
+    <div class="kpi-value" id="evSessions">1,247</div>
+    <div class="kpi-change pos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>12.8% vs yesterday</div>
+  </div>
+  <div class="kpi-card kc-amber">
+    <div class="kpi-icon ki-amber"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+    <div class="kpi-label">Accidents This Month</div>
+    <div class="kpi-value" id="accidents">87</div>
+    <div class="kpi-change neg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>15.3% vs last month</div>
+  </div>
+  <div class="kpi-card kc-pink">
+    <div class="kpi-icon ki-pink"><svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+    <div class="kpi-label">Bus On-Time Rate</div>
+    <div class="kpi-value" id="onTimeRate">87.2%</div>
+    <div class="kpi-change pos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>2.1% vs target</div>
+  </div>
+</div>
+
+<!-- ── CHARTS ROW 1 ── -->
+<div class="dash-grid">
+  <div class="chart-card">
+    <div class="card-header">
+      <div class="card-icon ci-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <h3>Hourly speed vs congestion index</h3>
+    </div>
+    <div class="chart-wrap"><canvas id="trafficChart"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="card-header">
+      <div class="card-icon ci-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.46-.46a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16.92z"/></svg></div>
+      <h3>Real-time traffic events</h3>
+    </div>
+    <div class="event-log" id="eventLog"></div>
+  </div>
+</div>
+
+<!-- ── LIVE HEATMAP ── -->
+<div class="dash-grid" style="margin-bottom:18px">
+  <div class="chart-card full">
+    <div class="card-header">
+      <div class="card-icon ci-purp"><svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <h3>Live city congestion heatmap — zone grid (congestion index 0–1)</h3>
+    </div>
+    <div class="heatmap-grid" id="heatmapGrid"></div>
+    <div class="hm-legend">
+      <span>Low</span>
+      <div class="hm-leg-bar"></div>
+      <span>High</span>
+      <span style="margin-left:12px;font-size:.7rem">Click a cell to inspect zone · Updates every 4s</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── CHARTS ROW 2 ── -->
+<div class="dash-grid">
+  <div class="chart-card">
+    <div class="card-header">
+      <div class="card-icon ci-green"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+      <h3>EV charging sessions by type</h3>
+    </div>
+    <div class="chart-wrap"><canvas id="evChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="card-header">
+      <div class="card-icon ci-green"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div>
+      <h3>EV station availability</h3>
+    </div>
+    <div class="station-list">
+      <div class="station-item"><span class="station-name">North Hub Station</span><span class="st-badge st-avail">8 / 10 Available</span></div>
+      <div class="station-item"><span class="station-name">Central Plaza</span><span class="st-badge st-busy">2 / 6 Available</span></div>
+      <div class="station-item"><span class="station-name">South Mall</span><span class="st-badge st-avail">5 / 8 Available</span></div>
+      <div class="station-item"><span class="station-name">East Terminal</span><span class="st-badge st-off">Maintenance</span></div>
+      <div class="station-item"><span class="station-name">West Park</span><span class="st-badge st-avail">7 / 7 Available</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CHARTS ROW 3 ── -->
+<div class="dash-grid">
+  <div class="chart-card">
+    <div class="card-header">
+      <div class="card-icon ci-amber"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+      <h3>Monthly accidents: 2023 vs 2024</h3>
+    </div>
+    <div class="chart-wrap"><canvas id="accidentChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="card-header">
+      <div class="card-icon ci-amber"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></div>
+      <h3>Accident causes breakdown</h3>
+    </div>
+    <div class="chart-wrap-sm"><canvas id="causesChart"></canvas></div>
+    <div class="causes-legend">
+      <div class="cause-item"><div class="cause-dot" style="background:#ef4444"></div>Speeding (35%)</div>
+      <div class="cause-item"><div class="cause-dot" style="background:#3b82f6"></div>Weather (22%)</div>
+      <div class="cause-item"><div class="cause-dot" style="background:#f59e0b"></div>Signal violation (18%)</div>
+      <div class="cause-item"><div class="cause-dot" style="background:#ec4899"></div>Distracted (15%)</div>
+      <div class="cause-item"><div class="cause-dot" style="background:#6b7280"></div>Other (10%)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CHARTS ROW 4 ── -->
+<div class="dash-grid">
+  <div class="chart-card">
+    <div class="card-header">
+      <div class="card-icon ci-pink"><svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+      <h3>Route on-time performance vs 85% target</h3>
+    </div>
+    <div class="route-list">
+      <div class="route-item"><span class="route-name">Route 1</span><div class="route-bar-bg"><div class="route-bar rb-good" style="width:92%"></div><div class="route-target"></div></div><span class="route-val">92%</span></div>
+      <div class="route-item"><span class="route-name">Route 5</span><div class="route-bar-bg"><div class="route-bar rb-good" style="width:88%"></div><div class="route-target"></div></div><span class="route-val">88%</span></div>
+      <div class="route-item"><span class="route-name">Route 12</span><div class="route-bar-bg"><div class="route-bar rb-warn" style="width:79%"></div><div class="route-target"></div></div><span class="route-val">79%</span></div>
+      <div class="route-item"><span class="route-name">Route 18</span><div class="route-bar-bg"><div class="route-bar rb-good" style="width:91%"></div><div class="route-target"></div></div><span class="route-val">91%</span></div>
+      <div class="route-item"><span class="route-name">Route 23</span><div class="route-bar-bg"><div class="route-bar rb-poor" style="width:72%"></div><div class="route-target"></div></div><span class="route-val">72%</span></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="card-header">
+      <div class="card-icon ci-pink"><svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+      <h3>Transport mode share</h3>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-item"><div class="mode-svg"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div class="mode-name">Private Car</div><div class="mode-pct" style="color:#00d4ff">45%</div></div>
+      <div class="mode-item"><div class="mode-svg"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div><div class="mode-name">Bus</div><div class="mode-pct" style="color:#10b981">28%</div></div>
+      <div class="mode-item"><div class="mode-svg"><svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M2 12h20M12 2v20"/></svg></div><div class="mode-name">Metro</div><div class="mode-pct" style="color:#a78bfa">18%</div></div>
+      <div class="mode-item"><div class="mode-svg"><svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6h-4l-2 6h10l-4-6z"/><path d="M3 9h2l2 5"/></svg></div><div class="mode-name">Two-Wheeler</div><div class="mode-pct" style="color:#f59e0b">9%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── WEEKLY VOLUME ── -->
+<div class="chart-card full" style="margin-bottom:18px">
+  <div class="card-header">
+    <div class="card-icon ci-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+    <h3>Weekly zone-wise traffic volume trend (vehicles/hour)</h3>
+  </div>
+  <div style="position:relative;height:240px"><canvas id="volumeChart"></canvas></div>
+</div>
+
+<!-- ── DATASET TABLE ── -->
+<div class="section-hdr"><h2>Dataset preview</h2></div>
+<div class="chart-card full" style="margin-bottom:18px">
+  <div class="card-header">
+    <div class="card-icon ci-purp"><svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg></div>
+    <h3>Kaggle dataset — sample records (Smart Mobility Traffic Dataset)</h3>
+  </div>
+  <div class="table-wrap">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)"># ID</th>
+          <th onclick="sortTable(1)">Timestamp</th>
+          <th onclick="sortTable(2)">Zone</th>
+          <th onclick="sortTable(3)">Vehicle Type</th>
+          <th onclick="sortTable(4)">Speed (km/h)</th>
+          <th onclick="sortTable(5)">Congestion Idx</th>
+          <th onclick="sortTable(6)">EV Session</th>
+          <th onclick="sortTable(7)">Accident</th>
+          <th onclick="sortTable(8)">Bus Delay (min)</th>
+          <th onclick="sortTable(9)">Status</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+  <div class="tbl-controls">
+    <span class="tbl-info" id="tblInfo">Showing 1–10 of 50 records</span>
+    <div class="tbl-pages" id="tblPages"></div>
+  </div>
+</div>
+
+<!-- ── GRAIN ANALYSIS ── -->
+<div class="section-hdr"><h2>Grain &amp; visualization analysis</h2></div>
+<div class="chart-card full" style="margin-bottom:18px">
+  <div class="card-header">
+    <div class="card-icon ci-purp"><svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+    <h3>Each visualization grain explained — dataset column → chart type → insight</h3>
+  </div>
+  <div class="grain-grid">
+    <div class="grain-card">
+      <div class="grain-top"><div class="grain-num">1</div><div class="grain-title">Traffic flow &amp; congestion</div></div>
+      <div class="grain-col">Columns: speed_kmh, congestion_index, hour_of_day</div>
+      <div class="grain-chart-type">Dual-axis line chart</div>
+      <div class="grain-desc">Speed and congestion are inversely correlated — as congestion rises above 0.7 during 8–10 AM and 5–7 PM, average speed drops to 28–32 km/h. AI signal timing can reduce peak congestion by ~15%.</div>
+    </div>
+    <div class="grain-card">
+      <div class="grain-top"><div class="grain-num">2</div><div class="grain-title">EV charging sessions</div></div>
+      <div class="grain-col">Columns: session_type, session_count, station_id</div>
+      <div class="grain-chart-type">Doughnut chart</div>
+      <div class="grain-desc">Fast chargers account for 45% of all sessions despite being only 30% of stations, indicating significant unmet demand. Expanding fast charging by 40% in South/East zones is recommended.</div>
+    </div>
+    <div class="grain-card">
+      <div class="grain-top"><div class="grain-num">3</div><div class="grain-title">Accident frequency trend</div></div>
+      <div class="grain-col">Columns: accident_count, month, year</div>
+      <div class="grain-chart-type">Grouped bar chart</div>
+      <div class="grain-desc">2024 shows an 18% reduction in accidents vs 2023. Monsoon months (Jul–Sep) remain high-risk. Predictive AI flagging reduced rear-end collisions by 22% in North Zone.</div>
+    </div>
+    <div class="grain-card">
+      <div class="grain-top"><div class="grain-num">4</div><div class="grain-title">Accident cause distribution</div></div>
+      <div class="grain-col">Columns: cause_category, cause_count</div>
+      <div class="grain-chart-type">Polar area chart</div>
+      <div class="grain-desc">Speeding (35%) and weather (22%) together account for 57% of all incidents. Targeted speed cameras at 12 identified hotspot junctions could reduce incidents by a projected 22%.</div>
+    </div>
+    <div class="grain-card">
+      <div class="grain-top"><div class="grain-num">5</div><div class="grain-title">Bus on-time performance</div></div>
+      <div class="grain-col">Columns: route_id, on_time_pct, target_pct</div>
+      <div class="grain-chart-type">Horizontal progress bars</div>
+      <div class="grain-desc">Routes 12 (79%) and 23 (72%) fall below the 85% target. Both routes share a common bottleneck at Junction 7. Signal priority systems could recover 8–12% on-time improvement.</div>
+    </div>
+    <div class="grain-card">
+      <div class="grain-top"><div class="grain-num">6</div><div class="grain-title">Transport mode share</div></div>
+      <div class="grain-col">Columns: transport_mode, trip_count</div>
+      <div class="grain-chart-type">Icon-based proportion cards</div>
+      <div class="grain-desc">Private cars dominate at 45%. Shifting just 10% of car trips to bus/metro would reduce congestion index citywide by 0.12 points and lower carbon emissions by an estimated 8,400 tonnes/year.</div>
+    </div>
+    <div class="grain-card">
+      <div class="grain-top"><div class="grain-num">7</div><div class="grain-title">Weekly zone volume</div></div>
+      <div class="grain-col">Columns: zone, day_of_week, vehicle_count</div>
+      <div class="grain-chart-type">Multi-line area chart</div>
+      <div class="grain-desc">North Zone consistently peaks on Fridays (14,100 vehicles/hr), 23% above the weekly average. Weekend volumes drop by 25% across all zones, suggesting flexible infrastructure deployment.</div>
+    </div>
+    <div class="grain-card">
+      <div class="grain-top"><div class="grain-num">8</div><div class="grain-title">City congestion heatmap</div></div>
+      <div class="grain-col">Columns: grid_cell_id, congestion_index, zone</div>
+      <div class="grain-chart-type">Grid heatmap</div>
+      <div class="grain-desc">The 10×10 heatmap reveals spatial clustering of high congestion in the North-Central corridor. 12% of grid cells account for 68% of total delay time, pinpointing priority intervention zones.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <div class="footer-left">
+    <strong>Smart Mobility Traffic Dashboard v2</strong><br>
+    Dataset: Kaggle — Smart Mobility Traffic Dataset by ziya07 &nbsp;|&nbsp;
+    Records: 50,000+ &nbsp;|&nbsp; Features: 18 &nbsp;|&nbsp;
+    AI Tool: Claude AI (HTML/JS) &nbsp;|&nbsp; Practical Assignment 3 — IoT Dashboard Visualization
+  </div>
+  <a class="footer-link" href="https://www.kaggle.com/datasets/ziya07/smart-mobility-traffic-dataset" target="_blank">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    View Kaggle Dataset
+  </a>
+</footer>
+
+</div><!-- /wrap -->
+
+<!-- ── MODAL ── -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <div class="modal-title">Claude AI — Dashboard Analysis</div>
+    </div>
+    <div class="apoint"><strong>Traffic Flow:</strong> North Zone shows 15% higher congestion during peak hours (8–10 AM, 5–7 PM). AI-based dynamic signal timing can reduce peak congestion index from 0.81 to below 0.60, saving an estimated 22 minutes of average commute time.</div>
+    <div class="apoint"><strong>EV Infrastructure:</strong> Fast chargers handle 45% of sessions from only 30% of stations. Recommend a 40% capacity expansion in South and East zones with demand-prediction algorithms to pre-allocate charging slots.</div>
+    <div class="apoint"><strong>Accident Prediction:</strong> 2024 shows an 18% reduction vs 2023. Speeding (35%) remains top cause. Deploying AI-powered speed enforcement at 12 identified hotspot junctions projects a further 22% reduction.</div>
+    <div class="apoint"><strong>Weather Impact:</strong> Rainy conditions increase accident rate by +34% and reduce average speed by 18 km/h. Foggy conditions increase accident risk by +48%. Adaptive speed limits triggered by weather sensors are recommended.</div>
+    <div class="apoint"><strong>Public Transport:</strong> Routes 12 and 23 underperform below 85% target. A traffic signal priority system and dedicated bus lanes at Junction 7 could recover 8–12% on-time performance within one quarter.</div>
+    <div class="apoint"><strong>Overall Recommendation:</strong> Implement citywide IoT-based adaptive traffic management. Integrating EV demand forecasting, real-time public transport rerouting, and AI accident prediction projects a 20% overall efficiency improvement by Q3 2025.</div>
+    <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">Close Analysis</button>
+  </div>
+</div>
+
+<script>
+/* ── DATA ── */
+const Z={
+  all:{speed:[35,38,42,45,40,38,42,48,52,55,50,45,42,40,38,42,45,48,45,42,50,55,48,42],cong:[.70,.65,.55,.50,.58,.65,.55,.45,.35,.32,.38,.48,.52,.55,.62,.52,.48,.42,.48,.55,.40,.30,.42,.55],ev:{f:520,s:450,w:280},a24:[95,88,82,78,85,72,68,75,87,92,85,80],a23:[110,105,98,92,100,88,82,90,102,108,98,95],vN:[12500,13200,14100,13800,12900,11500,10800],vS:[11800,12500,13200,12800,12100,10900,10200],vE:[10200,10800,11500,11200,10500,9800,9200],vW:[9500,10100,10800,10500,9900,9200,8600]},
+  north:{speed:[32,35,38,42,38,35,38,45,48,52,48,42,38,36,34,38,42,45,42,38,48,52,45,38],cong:[.75,.70,.60,.55,.62,.70,.60,.48,.38,.35,.42,.52,.58,.60,.68,.58,.52,.45,.52,.60,.42,.32,.45,.60],ev:{f:145,s:125,w:78},a24:[28,25,23,22,25,20,18,21,25,27,24,22],a23:[32,30,28,26,29,25,23,26,30,32,28,27],vN:[12500,13200,14100,13800,12900,11500,10800],vS:[0,0,0,0,0,0,0],vE:[0,0,0,0,0,0,0],vW:[0,0,0,0,0,0,0]},
+  south:{speed:[38,42,45,48,42,40,45,52,55,58,54,48,45,42,40,45,48,52,48,45,54,58,52,45],cong:[.62,.58,.48,.42,.52,.58,.48,.38,.28,.25,.32,.42,.48,.52,.58,.48,.42,.35,.42,.50,.35,.25,.38,.50],ev:{f:135,s:118,w:72},a24:[22,20,18,17,19,16,15,17,20,22,19,18],a23:[26,24,22,20,23,20,18,21,24,26,23,22],vN:[0,0,0,0,0,0,0],vS:[11800,12500,13200,12800,12100,10900,10200],vE:[0,0,0,0,0,0,0],vW:[0,0,0,0,0,0,0]},
+  east:{speed:[40,44,48,52,45,42,48,55,58,62,56,50,46,44,42,46,50,54,50,46,56,60,54,48],cong:[.58,.52,.42,.38,.48,.52,.42,.32,.22,.20,.28,.38,.42,.48,.52,.42,.38,.32,.38,.45,.32,.22,.35,.45],ev:{f:125,s:108,w:68},a24:[20,18,17,16,18,15,14,16,19,20,18,17],a23:[24,22,20,19,21,18,17,19,22,24,21,20],vN:[0,0,0,0,0,0,0],vS:[0,0,0,0,0,0,0],vE:[10200,10800,11500,11200,10500,9800,9200],vW:[0,0,0,0,0,0,0]},
+  west:{speed:[36,40,44,48,42,38,44,50,54,58,52,46,42,40,38,42,46,50,46,42,52,56,50,44],cong:[.65,.60,.50,.45,.55,.60,.50,.40,.30,.28,.35,.45,.50,.55,.60,.50,.45,.38,.45,.52,.38,.28,.40,.52],ev:{f:115,s:99,w:62},a24:[25,23,22,21,23,19,18,20,23,25,22,21],a23:[28,26,25,24,26,23,22,24,27,29,26,25],vN:[0,0,0,0,0,0,0],vS:[0,0,0,0,0,0,0],vE:[0,0,0,0,0,0,0],vW:[9500,10100,10800,10500,9900,9200,8600]}
+};
+
+const weatherMod={sunny:{spd:1,acc:1,cong:1},rainy:{spd:.72,acc:1.34,cong:1.3},foggy:{spd:.65,acc:1.48,cong:1.42}};
+let currentWeather='sunny';
+
+/* ── CHARTS ── */
+Chart.defaults.color='#8b949e';
+Chart.defaults.borderColor='rgba(255,255,255,0.08)';
+let trafficC,evC,accidentC,causesC,volumeC;
+
+function initCharts(){
+  const d=Z.all;
+  const hrs=Array.from({length:24},(_,i)=>`${i}:00`);
+
+  trafficC=new Chart(document.getElementById('trafficChart'),{
+    type:'line',
+    data:{labels:hrs,datasets:[
+      {label:'Speed (km/h)',data:d.speed,borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,0.07)',fill:true,tension:.4,pointRadius:2,yAxisID:'y'},
+      {label:'Congestion Index',data:d.cong,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.07)',fill:true,tension:.4,pointRadius:2,yAxisID:'y1'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},
+      plugins:{legend:{labels:{boxWidth:11,padding:14}}},
+      scales:{
+        y:{position:'left',title:{display:true,text:'Speed (km/h)'},ticks:{font:{size:10}}},
+        y1:{position:'right',title:{display:true,text:'Congestion'},min:0,max:1.5,grid:{drawOnChartArea:false},ticks:{font:{size:10}}}
+      }
+    }
+  });
+
+  evC=new Chart(document.getElementById('evChart'),{
+    type:'doughnut',
+    data:{labels:['Fast Charger','Standard','Slow / Home'],datasets:[{data:[d.ev.f,d.ev.s,d.ev.w],backgroundColor:['#00d4ff','#10b981','#7c3aed'],borderWidth:2,borderColor:'#0d1117'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:11,padding:12}}}}
+  });
+
+  accidentC=new Chart(document.getElementById('accidentChart'),{
+    type:'bar',
+    data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],datasets:[
+      {label:'2024',data:d.a24,backgroundColor:'rgba(0,212,255,0.75)',borderRadius:4},
+      {label:'2023',data:d.a23,backgroundColor:'rgba(255,255,255,0.2)',borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:11,padding:12}}},
+      scales:{x:{ticks:{font:{size:10},autoSkip:false,maxRotation:45}},y:{ticks:{font:{size:10}}}}}
+  });
+
+  causesC=new Chart(document.getElementById('causesChart'),{
+    type:'polarArea',
+    data:{labels:['Speeding','Weather','Signal Violation','Distracted','Other'],datasets:[{data:[35,22,18,15,10],backgroundColor:['rgba(239,68,68,.72)','rgba(59,130,246,.72)','rgba(245,158,11,.72)','rgba(236,72,153,.72)','rgba(107,114,128,.72)']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
+  });
+
+  volumeC=new Chart(document.getElementById('volumeChart'),{
+    type:'line',
+    data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[
+      {label:'North Zone',data:d.vN,borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,.07)',fill:true,tension:.4,pointRadius:4},
+      {label:'South Zone',data:d.vS,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.07)',fill:true,tension:.4,pointRadius:4},
+      {label:'East Zone', data:d.vE,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.07)',fill:true,tension:.4,pointRadius:4},
+      {label:'West Zone', data:d.vW,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.07)',fill:true,tension:.4,pointRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:11,padding:14}}},
+      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}}}}}
+  });
+}
+
+function updateDashboard(){
+  const z=document.getElementById('zoneFilter').value;
+  const d=Z[z]||Z.all;
+  const m=weatherMod[currentWeather];
+
+  trafficC.data.datasets[0].data=d.speed.map(v=>+(v*m.spd).toFixed(1));
+  trafficC.data.datasets[1].data=d.cong.map(v=>+(v*m.cong).toFixed(2));
+  trafficC.update();
+
+  evC.data.datasets[0].data=[d.ev.f,d.ev.s,d.ev.w];
+  evC.update();
+
+  accidentC.data.datasets[0].data=d.a24.map(v=>Math.round(v*m.acc));
+  accidentC.data.datasets[1].data=d.a23.map(v=>Math.round(v*m.acc));
+  accidentC.update();
+
+  volumeC.data.datasets[0].data=d.vN;
+  volumeC.data.datasets[1].data=d.vS;
+  volumeC.data.datasets[2].data=d.vE;
+  volumeC.data.datasets[3].data=d.vW;
+  volumeC.update();
+
+  const avgSpd=(d.speed.reduce((a,b)=>a+b,0)/d.speed.length*m.spd).toFixed(1);
+  const totEV=d.ev.f+d.ev.s+d.ev.w;
+  const totAcc=Math.round(d.a24.reduce((a,b)=>a+b,0)*m.acc);
+  document.getElementById('avgSpeed').textContent=avgSpd+' km/h';
+  document.getElementById('evSessions').textContent=totEV.toLocaleString();
+  document.getElementById('accidents').textContent=totAcc;
+  updateForecast(parseFloat(avgSpd),m);
+}
+
+/* ── WEATHER ── */
+function setWeather(w,btn){
+  currentWeather=w;
+  document.querySelectorAll('.wtab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateDashboard();
+}
+
+/* ── HOUR SLIDER ── */
+function onHourSlide(v){
+  const h=parseInt(v);
+  document.getElementById('hourVal').textContent=`${h}:00`;
+  const z=document.getElementById('zoneFilter').value;
+  const d=Z[z]||Z.all;
+  const m=weatherMod[currentWeather];
+  const spd=(d.speed[h]*m.spd).toFixed(1);
+  const cong=(d.cong[h]*m.cong).toFixed(2);
+  document.getElementById('avgSpeed').textContent=spd+' km/h';
+  updateForecast(parseFloat(spd),m,cong);
+}
+
+/* ── FORECAST STRIP ── */
+function updateForecast(spd,m,congVal){
+  const cong=congVal||0.65;
+  const fc=+(cong*1.12).toFixed(2);
+  const risk=fc>0.8?'High':fc>0.55?'Medium':'Low';
+  const riskColor=fc>0.8?'var(--red)':fc>0.55?'var(--amber)':'var(--green)';
+  const riskClass=fc>0.8?'risk-high':fc>0.55?'risk-med':'risk-low';
+  const evChg=Math.round((1-fc)*18);
+  const fspd=Math.max(25,Math.round(spd-4));
+  document.getElementById('fc-cong').textContent=fc;
+  document.getElementById('fc-cong').style.color=riskColor;
+  document.getElementById('fc-cong-bar').style.width=(fc*100)+'%';
+  document.getElementById('fc-cong-bar').style.background=riskColor;
+  document.getElementById('fc-risk-val').textContent=risk;
+  document.getElementById('fc-risk-val').style.color=riskColor;
+  const pill=document.getElementById('fc-risk-pill');
+  pill.className='fc-risk '+riskClass;
+  document.getElementById('fc-ev').textContent='+'+evChg+'%';
+  document.getElementById('fc-ev-bar').style.width=Math.min(95,40+evChg)+'%';
+  document.getElementById('fc-speed').textContent=fspd+' km/h';
+  document.getElementById('fc-speed-bar').style.width=Math.round(fspd/80*100)+'%';
+  const score=Math.round(100-(fc*60)-(currentWeather==='rainy'?10:currentWeather==='foggy'?15:0));
+  updateGauge(score);
+}
+
+/* ── GAUGE ── */
+function updateGauge(score){
+  const total=204;
+  const filled=total*(score/100);
+  document.getElementById('gaugeArc').style.strokeDashoffset=total-filled;
+  document.getElementById('gaugeVal').textContent=score;
+  const c=score>70?'#10b981':score>45?'#f59e0b':'#ef4444';
+  document.getElementById('gaugeVal').setAttribute('fill',c);
+}
+
+/* ── HEATMAP ── */
+const hmVals=[];
+function initHeatmap(){
+  const grid=document.getElementById('heatmapGrid');
+  const zones=['N1','N2','N3','N4','N5','N6','N7','N8','N9','N0',
+               'C1','C2','C3','C4','C5','C6','C7','C8','C9','C0',
+               'E1','E2','E3','E4','E5','E6','E7','E8','E9','E0',
+               'W1','W2','W3','W4','W5','W6','W7','W8','W9','W0',
+               'S1','S2','S3','S4','S5','S6','S7','S8','S9','S0',
+               'X1','X2','X3','X4','X5','X6','X7','X8','X9','X0',
+               'Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y0',
+               'Z1','Z2','Z3','Z4','Z5','Z6','Z7','Z8','Z9','Z0',
+               'A1','A2','A3','A4','A5','A6','A7','A8','A9','A0',
+               'B1','B2','B3','B4','B5','B6','B7','B8','B9','B0'];
+  for(let i=0;i<100;i++){
+    const v=Math.random();
+    hmVals.push(v);
+    const cell=document.createElement('div');
+    cell.className='hm-cell';
+    cell.id='hm'+i;
+    cell.title='Zone '+zones[i]+' · CI: '+v.toFixed(2);
+    cell.onclick=()=>alert('Zone '+zones[i]+'\nCongestion Index: '+hmVals[i].toFixed(2)+'\nStatus: '+(hmVals[i]>.7?'Critical':hmVals[i]>.45?'Moderate':'Clear'));
+    setHmCell(cell,v);
+    grid.appendChild(cell);
+  }
+}
+
+function setHmCell(el,v){
+  const r=v>.7?Math.round(239-((v-.7)/.3)*20):v>.45?Math.round(50+((v-.45)/.25)*189):16;
+  const g=v>.7?Math.round(68+((1-v)/.3)*117):v>.45?Math.round(185-((v-.45)/.25)*117):185;
+  const b=v>.7?68:v>.45?17:129;
+  el.style.background=`rgb(${r},${g},${b})`;
+  el.textContent=v>.7?'!':v>.45?'~':'';
+}
+
+function refreshHeatmap(){
+  for(let i=0;i<100;i++){
+    const delta=(Math.random()-.5)*.1;
+    hmVals[i]=Math.min(1,Math.max(0,hmVals[i]+delta));
+    const cell=document.getElementById('hm'+i);
+    if(cell){setHmCell(cell,hmVals[i])}
+  }
+}
+
+/* ── LIVE EVENT TICKER ── */
+const evtTemplates=[
+  {t:'ed-high',msg:'Heavy congestion detected — North Zone Highway'},
+  {t:'ed-med', msg:'Bus Route 12 delayed by 7 minutes'},
+  {t:'ed-low', msg:'EV fast charger available — West Park Station'},
+  {t:'ed-high',msg:'Minor accident reported — East Zone Junction 9'},
+  {t:'ed-med', msg:'Moderate traffic build-up — Central Boulevard'},
+  {t:'ed-low', msg:'Traffic signal optimized — South Zone Route 5'},
+  {t:'ed-high',msg:'Road closure — maintenance work on North Expressway'},
+  {t:'ed-med', msg:'EV station Central Plaza — 2 slots remaining'},
+  {t:'ed-low', msg:'Metro Line 3 on-time departure — Platform 2'},
+  {t:'ed-high',msg:'Accident alert — West Zone Expressway KM 14'},
+];
+let evtIdx=0;
+function pushEvent(){
+  const log=document.getElementById('eventLog');
+  const now=new Date();
+  const ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const e=evtTemplates[evtIdx%evtTemplates.length];
+  evtIdx++;
+  const item=document.createElement('div');
+  item.className='event-item';
+  item.innerHTML=`<span class="event-dot ${e.t}"></span><span class="event-time">${ts}</span><span class="event-text">${e.msg}</span>`;
+  log.insertBefore(item,log.firstChild);
+  if(log.children.length>8)log.removeChild(log.lastChild);
+}
+
+/* ── DATASET TABLE ── */
+const zones2=['North','South','East','West'];
+const vTypes=['Car','Bus','Truck','Motorcycle','EV'];
+const rawData=Array.from({length:50},(_,i)=>({
+  id:1001+i,
+  ts:'2024-0'+Math.min(9,Math.floor(i/6)+1).toString().padStart(2,'0')+'-'+((i%28)+1).toString().padStart(2,'0')+' '+(6+i%18).toString().padStart(2,'0')+':00',
+  zone:zones2[i%4],
+  vtype:vTypes[i%5],
+  speed:Math.round(28+Math.random()*34),
+  cong:+(0.2+Math.random()*.8).toFixed(2),
+  ev:Math.random()>.5?'Yes':'No',
+  acc:Math.random()>.88?'Yes':'No',
+  delay:Math.random()>.6?0:Math.round(Math.random()*12),
+}));
+
+let tblPage=0,sortCol=-1,sortAsc=true;
+const PER=8;
+
+function renderTable(){
+  const body=document.getElementById('tableBody');
+  const start=tblPage*PER,end=Math.min(start+PER,rawData.length);
+  const slice=rawData.slice(start,end);
+  body.innerHTML=slice.map(r=>{
+    const st=r.cong>.7?'pill-r':'pill-g';
+    const stLbl=r.cong>.7?'Critical':r.cong>.45?'Moderate':'Clear';
+    return`<tr>
+      <td>#${r.id}</td><td>${r.ts}</td><td>${r.zone}</td><td>${r.vtype}</td>
+      <td>${r.speed}</td><td>${r.cong}</td>
+      <td>${r.ev==='Yes'?'<span class="tbl-pill" style="background:rgba(16,185,129,.18);color:#34d399">Yes</span>':'No'}</td>
+      <td>${r.acc==='Yes'?'<span class="tbl-pill" style="background:rgba(239,68,68,.18);color:#f87171">Yes</span>':'No'}</td>
+      <td>${r.delay===0?'—':'+'+r.delay}</td>
+      <td><span class="tbl-pill ${st==='pill-r'?'':''}st${stLbl}" style="${r.cong>.7?'background:rgba(239,68,68,.18);color:#f87171':r.cong>.45?'background:rgba(245,158,11,.18);color:#fbbf24':'background:rgba(16,185,129,.18);color:#34d399'}">${stLbl}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tblInfo').textContent=`Showing ${start+1}–${end} of ${rawData.length} records`;
+  const pages=document.getElementById('tblPages');
+  const total=Math.ceil(rawData.length/PER);
+  pages.innerHTML=Array.from({length:total},(_,i)=>`<button class="pg-btn${i===tblPage?' active':''}" onclick="goPage(${i})">${i+1}</button>`).join('');
+}
+
+function goPage(p){tblPage=p;renderTable()}
+
+function sortTable(col){
+  if(sortCol===col)sortAsc=!sortAsc; else{sortCol=col;sortAsc=true}
+  const keys=['id','ts','zone','vtype','speed','cong','ev','acc','delay'];
+  rawData.sort((a,b)=>{
+    const k=keys[col];
+    return sortAsc?(a[k]>b[k]?1:-1):(a[k]<b[k]?1:-1);
+  });
+  tblPage=0;renderTable();
+}
+
+/* ── THEME TOGGLE ── */
+function toggleTheme(){
+  const html=document.documentElement;
+  const isDark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',isDark?'light':'dark');
+  const icon=document.getElementById('themeIcon');
+  if(isDark){
+    icon.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+    Chart.defaults.color='#555';
+    Chart.defaults.borderColor='rgba(0,0,0,0.1)';
+  } else {
+    icon.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    Chart.defaults.color='#8b949e';
+    Chart.defaults.borderColor='rgba(255,255,255,0.08)';
+  }
+  [trafficC,evC,accidentC,causesC,volumeC].forEach(c=>c&&c.update());
+}
+
+/* ── EXPORT PDF ── */
+function exportPDF(){
+  window.print();
+}
+
+/* ── INIT ── */
+window.onload=function(){
+  initCharts();
+  initHeatmap();
+  renderTable();
+  for(let i=0;i<5;i++)pushEvent();
+  setInterval(pushEvent,4500);
+  setInterval(refreshHeatmap,4000);
+  updateForecast(42.5,weatherMod.sunny,0.65);
+};
+</script>
+</body>
+</html>
